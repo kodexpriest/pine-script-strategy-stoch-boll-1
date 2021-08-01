@@ -5,11 +5,13 @@
 //  Fully customizable. It uses ATR to set the stop loss and take profit parameters.
 //  
 //
-strategy("Kodex's Strategy: 15' BB+Stoch", shorttitle="K's BB+STOCH", overlay=true, commission_value=0.075, pyramiding=0, currency="USD", initial_capital=100)
+strategy("Kodex's Strategy: 15' BB+Stoch", shorttitle="K's BB+STOCH", overlay=true, commission_value=0.024, pyramiding=0, currency="USD", initial_capital=100)
 
 
 //▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒//
 //Vars, Inputs and consts
+time_cond = time > (timenow-input(7, "Days back to backtesting")*86400000)
+
 ema_slow = ema(close,input(200, "Slow EMA"))
 using_ema = input(true, "Use EMA restriction")
 go_long = input(true, "Go Long")
@@ -27,22 +29,6 @@ var short_tp = 0.0
 has_open_trade() => strategy.opentrades != 0
 is_long = strategy.position_size>0 and has_open_trade()
 is_short = strategy.position_size<0 and has_open_trade()
-
-
-// From Date Inputs
-fromDay = input(defval = 1, title = "From Day", minval = 1, maxval = 31)
-fromMonth = input(defval = 7, title = "From Month", minval = 1, maxval = 12)
-fromYear = input(defval = 2021, title = "From Year", minval = 2005)
- 
-// To Date Inputs
-toDay = input(defval = 1, title = "To Day", minval = 1, maxval = 31)
-toMonth = input(defval = 8, title = "To Month", minval = 1, maxval = 12)
-toYear = input(defval = 2021, title = "To Year", minval = 2005)
- 
-// Calculate start/end date and time condition
-startDate = timestamp(fromYear, fromMonth, fromDay, 00, 00)
-finishDate = timestamp(toYear, toMonth, toDay, 00, 00)
-time_cond = time >= startDate and time <= finishDate
 
 
 
@@ -68,7 +54,7 @@ bb_lower = basis - dev
 //Logic & trailing stop loss
 
 long_trigger = (k<20 and hl2<bb_lower and (low>ema_slow or not using_ema))
-short_trigger = (k>80 and hl2>bb_lower and (high<ema_slow or not using_ema))
+short_trigger = (k>80 and hl2>bb_upper and (high<ema_slow or not using_ema))
 
 
 long_signal = long_trigger and go_long and not has_open_trade()
