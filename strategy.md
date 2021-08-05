@@ -25,18 +25,27 @@ go_adx          = input(true, "ADX looking for trends", group="Entry filters", i
 go_sar          = input(true, "SAR filter", group="Entry filters", inline="go")
 go_sar_cross    = input(true, "SAR cross trigger", group="Entry filters", inline="go")
 
+
 //ADX
 go_adx_val      = input(DEFAULT_ADX, "Limit",  inline="adx", group="ADX")
 adxlen          = input(DEFAULT_LEN, "Smoothing", group="ADX", inline="adx" )
 dilen           = input(DEFAULT_LEN, "length", group="ADX", inline="adx")
 
-barlength       = atr(DEFAULT_LEN) * 5
 
-//EMAs
-ema_slow        = ema(close,input(DEFAULT_SLOW, "Slow EMA", group="EMAs", inline="ema"))
-ema_base        = ema(close,input(DEFAULT_BASE, "Base Ema", group="EMAs", inline="ema"))
-ema_fast        = ema(close,input(DEFAULT_FAST, "Fast EMA", group="EMAs", inline="ema"))
+//Hullma
+hullma(hullma_length) =>
+    wma(2*wma(close, hullma_length/2)-wma(close, hullma_length), floor(sqrt(hullma_length)))
+
+//MAs
+input_ema_s = input(DEFAULT_SLOW, "Slow EMA", group="MAs", inline="hullma")
+input_ema_b = input(DEFAULT_BASE, "Base Ema", group="MAs", inline="hullma")
+input_ema_f = input(DEFAULT_FAST, "Fast EMA", group="MAs", inline="hullma")
+
+ema_slow        = hullma(input_ema_s)
+ema_base        = hullma(input_ema_b)
+ema_fast        = hullma(input_ema_f)
 ema_direction   = input(true, "Use Price direction based on EMAs?", tooltip="Evaluate Long entries when the slow ema slope is possitive and the fast Ema is above the slow Ema\n(Viceversa for shorts)", group="EMAs")
+
 
 //TP/SLs
 lookback        = input(DEFAULT_LEN, "How far to look back for high/lows and ATR (volatility) caluclation",group="TP/SL")
@@ -69,6 +78,7 @@ periodD = 3//input(3, title="STOCH %D Smoothing", minval=1)
 k = sma(stoch(close, high, low, periodK), smoothK)
 d = sma(k, periodD)
 
+
 //Bollinger Band
 length = input(20, minval=1, title="Length",group="Bollinger", inline="bb")
 src = close//input(close, title="BB Source")
@@ -77,6 +87,7 @@ basis = sma(src, length)
 dev = mult * stdev(src, length)
 bb_upper = basis + dev
 bb_lower = basis - dev
+
 
 //MACD
 macd_fast_ma = ema(close,input(DEFAULT_FAST,"fast EMA", group="MACD", inline="macd"))
@@ -203,13 +214,6 @@ plot(ema_fast, title="Fast EMA", color=color.new(#cf58d3,20), linewidth=1)
 label_long = "tri:"+tostring(long_trigger)+"\nsig:"+tostring(long_signal)
 label_shrt = "tri:"+tostring(shrt_trigger)+"\nsig:"+tostring(shrt_signal)
 
-
-if f_long_sar and f_adx and f_long_ema and false
-    line.new(bar_index, low-barlength, bar_index,high+barlength,color=color.new(#26a69a,70),width=2)
-    label.new(bar_index, high+barlength,text=label_long,textcolor=color.white)
-if f_shrt_sar and f_adx and f_shrt_ema and false
-    line.new(bar_index, low-barlength, bar_index,high+barlength,color=color.new(#ffa726,70),width=2)
-    label.new(bar_index, high+barlength,text=label_shrt,textcolor=color.white)
 
 //TSL
 plotshape(is_long?long_tsl[1]:na, title="long tsl", location=location.absolute, color=color.new(color.red,75), size=size.tiny, style=shape.triangleup, display=display.all)
